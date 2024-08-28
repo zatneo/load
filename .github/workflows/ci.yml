@@ -41,7 +41,7 @@ jobs:
       - name: Create test badge
         run: |
           curl -s "https://img.shields.io/badge/tests_passed-${PASSED}-brightgreen" -o badge.svg
-          chmod 775 badge.svg
+          chmod 777 badge.svg
 
       - name: List directory contents
         run: ls -la
