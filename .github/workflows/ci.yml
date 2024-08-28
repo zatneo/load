@@ -41,31 +41,22 @@ jobs:
       - name: Create test badge
         run: |
           curl -s "https://img.shields.io/badge/tests_passed-${PASSED}-brightgreen" -o badge.svg
-          chmod 777 badge.svg
-
-      - name: List directory contents
-        run: ls -la
-
-      - name: Print badge.svg content
-        run: cat badge.svg
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
+          chmod 775 badge.svg
 
       - name: Update README
         run: |
-          # Ensure badge.svg exists (optional)
-          if [ ! -f "badge.svg" ]; then
-            echo "Error: badge.svg not found. Skipping update."
-            exit 0
+          # Check if badge.svg exists and update README if it does
+          if [ -f "badge.svg" ]; then
+            sed -i "s/\[![test results]\([^)]*\)\]/\[![test results](badge.svg)\]/" README.md
+            git add README.md badge.svg
           fi
 
-          sed -i "s|tests_passed-[0-9]*-brightgreen|![test results](badge.svg)|" README.md
+          # ... rest of the git commands
+
+      - name: Commit and push changes
+        run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md badge.svg
           git commit -m "Update test results badge"
           git push
         env:
@@ -74,4 +65,3 @@ jobs:
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-
