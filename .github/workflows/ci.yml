@@ -1,37 +1,53 @@
-name: Java CI
+name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
+          distribution: 'temurin'
           java-version: '17'
-          distribution: 'adopt'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
 
       - name: Build with Maven
         run: mvn clean install
 
-      - name: Run Tests
+      - name: Run tests with Maven
         run: mvn test
 
-      - name: Archive Test Reports
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-reports
-          path: target/surefire-reports/
+      - name: Parse test results
+        run: |
+          PASSED=$(grep -oP '(?<=<testsuite name=").*? tests="\K\d+(?=" skipped="0" failures="0" errors="0")' target/surefire-reports/*.xml | paste -sd+ | bc)
+          echo "PASSED=$PASSED" >> $GITHUB_ENV
+
+      - name: Create test badge
+        run: |
+          curl -s "https://img.shields.io/badge/tests_passed-${PASSED}-brightgreen" -o badge.svg
+
+      - name: Update README
+        run: |
+          sed -i '/\[tests_passed\]/s/(.*)/badge.svg/' README.md
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Update test results badge"
+          git push
+
