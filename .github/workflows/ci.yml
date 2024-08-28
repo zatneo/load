@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -20,17 +20,37 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
+
       - name: Build with Maven
         run: mvn clean install
 
-      - name: Create badge
-        run: curl -s "https://img.shields.io/badge/tests_passed-${PASSED}-brightgreen" -o badge.svg
+      - name: Run tests with Maven
+        run: mvn test
 
+      - name: Parse test results
+        run: |
+          PASSED=$(grep -oP '(?<=<testsuite name=").*? tests="\K\d+(?=" skipped="0" failures="0" errors="0")' target/surefire-reports/*.xml | paste -sd+ | bc)
+          echo "PASSED=$PASSED" >> $GITHUB_ENV
+
+      - name: Create test badge
+        run: |
+          curl -s "https://img.shields.io/badge/tests_passed-${PASSED}-brightgreen" -o badge.svg
       - name: List directory contents
         run: ls -la
 
       - name: Print badge.svg content
         run: cat badge.svg
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Update README
         run: |
@@ -41,4 +61,9 @@ jobs:
           git commit -m "Update test results badge"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
