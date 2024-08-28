@@ -42,6 +42,9 @@ jobs:
         run: |
           curl -s "https://img.shields.io/badge/tests_passed-${PASSED}-brightgreen" -o badge.svg
 
+      - name: List directory contents
+        run: ls -la
+
       - name: Print badge.svg content
         run: cat badge.svg
 
