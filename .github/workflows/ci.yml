@@ -56,7 +56,13 @@ jobs:
 
       - name: Update README
         run: |
-          sed -i "s|tests_passed-[0-9]*-brightgreen|![test results](./badge.svg)|" README.md
+          # Ensure badge.svg exists (optional)
+          if [ ! -f "badge.svg" ]; then
+            echo "Error: badge.svg not found. Skipping update."
+            exit 0
+          fi
+
+          sed -i "s|tests_passed-[0-9]*-brightgreen|![test results](badge.svg)|" README.md
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md badge.svg
