@@ -48,7 +48,6 @@ jobs:
           # Check if badge.svg exists and update README if it does
           if [ -f "badge.svg" ]; then
             sed -i "s/\[![test results]\([^)]*\)\]/\[![test results](badge.svg)\]/" README.md
-            git pull origin main
             git add README.md badge.svg
           fi
 
