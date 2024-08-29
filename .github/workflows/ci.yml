@@ -48,6 +48,7 @@ jobs:
           # Check if badge.svg exists and update README if it does
           if [ -f "badge.svg" ]; then
             sed -i "s/\[![test results]\([^)]*\)\]/\[![test results](badge.svg)\]/" README.md
+            git pull origin main
             git add README.md badge.svg
           fi
 
@@ -55,6 +56,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
+          
           git config user.name "zatneo"
           git config user.email "zatneosoft@gmail.com"
           git commit -m "Update test results badge"
